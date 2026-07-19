@@ -5,6 +5,7 @@ import httpStatus from "http-status";
 import bcrypt from "bcryptjs";
 import { userService } from "./user.service";
 import { catchAsync } from "../../utils/catchAsync";
+import { sendResponse } from "../../utils/sendResponse";
 
 
 
@@ -35,29 +36,7 @@ import { catchAsync } from "../../utils/catchAsync";
 //   }
 // };
 
-type TMeta={
-    page: number;
-    limit: number;
-    total: number;
-  }
 
-type TResponseData<T> ={
-  success: boolean;
-  statusCode: number;
-  message: string;
-  data: T;
-  meta?: TMeta
-}
-
-const sendResponse = <T>(res: Response, data: TResponseData<T>)=>{
-  res.status(data.statusCode).json({
-    success: data.success,
-    statusCode: data.statusCode,
-    message: data.message,
-    data: data.data,
-    meta: data.meta
-  })
-}
 
 const createUser = catchAsync(async(req: Request, res: Response, next: NextFunction)=>{
   const payload = req.body;
