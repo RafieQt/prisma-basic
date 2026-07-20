@@ -6,7 +6,10 @@ import bcrypt from "bcryptjs";
 import { userService } from "./user.service";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
-
+import jwt from "jsonwebtoken";
+import { jwtUtils } from "../../utils/jwt";
+import strict from "node:assert/strict";
+import { stringify } from "node:querystring";
 
 
 
@@ -62,6 +65,35 @@ const createUser = catchAsync(async(req: Request, res: Response, next: NextFunct
   })
 })
 
+
+
+const getMyProfile = catchAsync(async(req: Request, res: Response, next: NextFunction)=>{
+
+  const {accessToken} = req.cookies;
+  console.log(accessToken);
+
+  const verifiedToken = jwtUtils.verifiedToken(accessToken, config.jwt_access_secret);
+
+  if(typeof verifiedToken === "string"){
+    throw new Error(verifiedToken);
+  }
+
+  if(typeof verifiedToken === "string"){
+    throw new Error(verifiedToken);
+  }
+  
+  const profile = await userService.getMyProfileFromDB(verifiedToken.id)
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message:"User profile fetched successfully",
+    data:{profile}
+  })
+
+})
+
 export const userController = {
   createUser,
+  getMyProfile
 };
