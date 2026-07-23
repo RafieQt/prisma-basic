@@ -1,5 +1,5 @@
 import { prisma } from "../../lib/prisma";
-import { ICreatePostPayload } from "./post.interface";
+import { ICreatePostPayload, IUpdatePostPayload } from "./post.interface";
 
 const createPost = async (payload: ICreatePostPayload, userId: string) => {
   const result = await prisma.post.create({
@@ -57,7 +57,6 @@ const getPostsById = async (postId: string) => {
 };
 
 const getMyPosts = async (authorId: string) => {
-    
   const result = await prisma.post.findMany({
     where: {
       authorId,
@@ -73,10 +72,44 @@ const getMyPosts = async (authorId: string) => {
         },
       },
       _count: {
-        select:{
-            comments: true
-        }
-      }
+        select: {
+          comments: true,
+        },
+      },
+    },
+  });
+
+  return result;
+};
+
+const updatePost = async (
+  postId: string,
+  payload: IUpdatePostPayload,
+  authorId: string,
+  isAdmin: boolean,
+) => {
+  const post = await prisma.post.findUniqueOrThrow({
+    where: {
+      id: postId,
+    },
+  });
+
+  if (!isAdmin && post.authorId !== authorId) {
+    throw new Error("Unauthorized activity! Only owner and admin are allowed!");
+  }
+
+  const result = await prisma.post.update({
+    where: {
+      id: postId,
+    },
+    data: payload,
+    include: {
+      author: {
+        omit: {
+          password: true,
+        },
+      },
+      comments: true,
     },
   });
 
@@ -88,4 +121,5 @@ export const postService = {
   getAllPosts,
   getPostsById,
   getMyPosts,
+  updatePost
 };
