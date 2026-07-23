@@ -19,7 +19,7 @@ router.get("/:postId", postController.getPostsById);
 
 router.patch("/:postId", auth(Role.ADMIN, Role.AUTHOR, Role.USER), postController.updatePost)
 
-router.delete(":postId", auth(Role.ADMIN, Role.AUTHOR, Role.USER), postController.deleteId);
+router.delete("/:postId", auth(Role.ADMIN, Role.AUTHOR, Role.USER), postController.deleteId);
 
 
 
