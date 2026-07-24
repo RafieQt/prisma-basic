@@ -1,5 +1,5 @@
 import { error } from "node:console";
-import { CommentStatus } from "../../../generated/prisma/enums";
+import { CommentStatus, PostStatus } from "../../../generated/prisma/enums";
 import { prisma } from "../../lib/prisma";
 import { ICreatePostPayload, IUpdatePostPayload } from "./post.interface";
 
@@ -82,31 +82,30 @@ const getPostsById = async (postId: string) => {
 
     const post = await tx.post.findUniqueOrThrow({
       where: {
-      id: postId,
-    },
-    include: {
-      author: {
-        omit: {
-          password: true,
+        id: postId,
+      },
+      include: {
+        author: {
+          omit: {
+            password: true,
+          },
+        },
+        comments: {
+          where: {
+            status: CommentStatus.APPROVED,
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
+        _count: {
+          select: {
+            comments: true,
+          },
         },
       },
-      comments: {
-        where: {
-          status: CommentStatus.APPROVED,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-      },
-      _count: {
-        select: {
-          comments: true,
-        },
-      },
-    },
-    })
+    });
     return post;
-
   });
 
   return transactionResult;
@@ -193,6 +192,52 @@ const deletePost = async (
   });
 };
 
+const getPostsStats = async () => {
+  const transactionResult = prisma.$transaction(async (tx) => {
+    const totalPosts = await prisma.post.count();
+
+    const totalPublishedPosts = await prisma.post.count({
+      where: {
+        status: PostStatus.PUBLISHED,
+      },
+    });
+    const totalArchivedPosts = await prisma.post.count({
+      where: {
+        status: PostStatus.ARCHIVE,
+      },
+    });
+    const totalDraftPosts = await prisma.post.count({
+      where: {
+        status: PostStatus.DRAFT,
+      },
+    });
+    const totalComments = await prisma.comment.count();
+
+    const totalApprovedComments = await prisma.comment.count({
+      where: {
+        status: CommentStatus.APPROVED,
+      },
+    });
+    const totalRejectedComments = await prisma.comment.count({
+      where: {
+        status: CommentStatus.REJECTED,
+      },
+    });
+
+    return {
+      totalPosts,
+      totalPublishedPosts,
+      totalArchivedPosts,
+      totalDraftPosts,
+      totalComments,
+      totalApprovedComments,
+      totalRejectedComments,
+    };
+  });
+
+  return transactionResult;
+};
+
 export const postService = {
   createPost,
   getAllPosts,
@@ -200,4 +245,5 @@ export const postService = {
   getMyPosts,
   updatePost,
   deletePost,
+  getPostsStats,
 };
