@@ -1,3 +1,5 @@
+import { error } from "node:console";
+import { CommentStatus } from "../../../generated/prisma/enums";
 import { prisma } from "../../lib/prisma";
 import { ICreatePostPayload, IUpdatePostPayload } from "./post.interface";
 
@@ -28,20 +30,59 @@ const getAllPosts = async () => {
 };
 
 const getPostsById = async (postId: string) => {
-  const post = await prisma.post.findUniqueOrThrow({
-    where: {
-      id: postId,
-    },
-  });
+  // await prisma.post.update({
+  //   where: {
+  //     id: postId,
+  //   },
+  //   data: {
+  //     views: {
+  //       increment: 1,
+  //     },
+  //   },
+  // });
+  // // throw new Error("Fake error!");
+  // const post = await prisma.post.findUniqueOrThrow({
+  //   where: {
+  //     id: postId,
+  //   },
+  //   include: {
+  //     author: {
+  //       omit: {
+  //         password: true,
+  //       },
+  //     },
+  //     comments: {
+  //       where: {
+  //         status: CommentStatus.APPROVED,
+  //       },
+  //       orderBy: {
+  //         createdAt: "desc",
+  //       },
+  //     },
+  //     _count: {
+  //       select: {
+  //         comments: true,
+  //       },
+  //     },
+  //   },
+  // });
+  // return post;
 
-  const updatedPost = await prisma.post.update({
-    where: {
-      id: postId,
-    },
-    data: {
-      views: {
-        increment: 1,
+  const transactionResult = await prisma.$transaction(async (tx) => {
+    await tx.post.update({
+      where: {
+        id: postId,
       },
+      data: {
+        views: {
+          increment: 1,
+        },
+      },
+    });
+
+    const post = await tx.post.findUniqueOrThrow({
+      where: {
+      id: postId,
     },
     include: {
       author: {
@@ -49,11 +90,26 @@ const getPostsById = async (postId: string) => {
           password: true,
         },
       },
-      comments: true,
+      comments: {
+        where: {
+          status: CommentStatus.APPROVED,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      },
+      _count: {
+        select: {
+          comments: true,
+        },
+      },
     },
+    })
+    return post;
+
   });
 
-  return updatedPost;
+  return transactionResult;
 };
 
 const getMyPosts = async (authorId: string) => {
@@ -116,10 +172,32 @@ const updatePost = async (
   return result;
 };
 
+const deletePost = async (
+  postId: string,
+  authorId: string,
+  isAdmin: boolean,
+) => {
+  const post = await prisma.post.findUniqueOrThrow({
+    where: {
+      id: postId,
+    },
+  });
+
+  if (!isAdmin && post.authorId !== authorId) {
+    throw new Error("Unauthorized activity! Only owner and admin are allowed!");
+  }
+  await prisma.post.delete({
+    where: {
+      id: postId,
+    },
+  });
+};
+
 export const postService = {
   createPost,
   getAllPosts,
   getPostsById,
   getMyPosts,
-  updatePost
+  updatePost,
+  deletePost,
 };
