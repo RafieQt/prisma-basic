@@ -3,6 +3,8 @@ import { catchAsync } from "../../utils/catchAsync";
 import { commentService } from "./comment.service";
 import { sendResponse } from "../../utils/sendResponse";
 import HttpStatus from "http-status";
+
+
 const createComment = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const authorId = req.user?.id;
@@ -19,7 +21,17 @@ const createComment = catchAsync(
 );
 
 const getCommentByAuthorId = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {},
+  async (req: Request, res: Response, next: NextFunction) => {
+    const {authorId} = req.params;
+    const result = await commentService.getCommentByAuthorId(authorId as string);
+    sendResponse(res, {
+      success: true,
+      statusCode: HttpStatus.OK,
+      message: "Comments Fetched!",
+      data: result,
+    })
+
+  },
 );
 
 const getCommentByCommentId = catchAsync(
