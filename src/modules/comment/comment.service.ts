@@ -1,5 +1,8 @@
 import { prisma } from "../../lib/prisma";
-import { ICreateCommentPayload } from "./comment.interface";
+import {
+  ICreateCommentPayload,
+  IUpdateCommentPayload,
+} from "./comment.interface";
 
 const createComment = async (
   authorId: string,
@@ -21,27 +24,72 @@ const createComment = async (
 };
 
 const getCommentByAuthorId = async (authorId: string) => {
-    const result = await prisma.comment.findMany({
-        where:{
-            id: authorId
+  const result = await prisma.comment.findMany({
+    where: {
+      id: authorId,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    include: {
+      post: {
+        select: {
+          id: true,
+          title: true,
         },
-        orderBy:{
-            createdAt: "desc"
+      },
+    },
+  });
+  return result;
+};
+
+const getCommentByCommentId = async (commentId: string) => {
+  const result = await prisma.comment.findUniqueOrThrow({
+    where: {
+      id: commentId,
+    },
+    include: {
+      post: {
+        select: {
+          id: true,
+          title: true,
+          views: true,
         },
-        include:{
-            post: {
-                select:{
-                    id:true,
-                    title:true
-                }
-            }
-        }
-    })
-    return result;
+      },
+    },
+  });
+
+  return result;
+};
+
+const updateComment = async (
+  commentId: string,
+  payload: IUpdateCommentPayload,
+  authorId: string,
+) => {
+  const comment = await prisma.comment.findUniqueOrThrow({
+    where: {
+      id: commentId,
+      authorId,
+    },
+    select: {
+      id: true,
+    },
+  });
+  const upComment = await prisma.comment.update({
+    where: {
+      id: commentId,
+      authorId,
+    },
+    data: payload,
+  });
+
+  return upComment;
 };
 
 export const commentService = {
   createComment,
   getCommentByAuthorId,
-
+  getCommentByCommentId,
+  updateComment,
 };

@@ -35,11 +35,35 @@ const getCommentByAuthorId = catchAsync(
 );
 
 const getCommentByCommentId = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {},
+  async (req: Request, res: Response, next: NextFunction) => {
+    const {commentId} = req.params;
+
+    const result = await commentService.getCommentByCommentId(commentId as string);
+
+    sendResponse(res,{
+      success: true,
+      statusCode: HttpStatus.OK,
+      message: "Comment Fetched!",
+      data: result,
+    })
+  },
 );
 
 const updateComment = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {},
+  async (req: Request, res: Response, next: NextFunction) => {
+    const payload = req.body;
+    const {commentId} = req.params;
+    const authorId = req.user?.id;
+
+    const result = await commentService.updateComment(commentId as string, payload, authorId as string)
+
+    sendResponse(res,{
+      success: true,
+      statusCode: HttpStatus.OK,
+      message: "Comment Updated!",
+      data: result,
+    })
+  },
 );
 
 const deleteComment = catchAsync(
