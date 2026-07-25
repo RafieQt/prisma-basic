@@ -67,7 +67,19 @@ const updateComment = catchAsync(
 );
 
 const deleteComment = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {},
+  async (req: Request, res: Response, next: NextFunction) => {
+    const {commentId} = req.params;
+    const authorId = req.user?.id;
+
+    const result = await commentService.deleteComment(commentId as string, authorId as string);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: HttpStatus.OK,
+      message: "Comment Deleted!",
+      data: result,
+    })
+  },
 );
 
 const moderateComment = catchAsync(
