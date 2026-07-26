@@ -1,12 +1,15 @@
 import cookieParser from "cookie-parser";
-import express, { Application, Request, Response } from "express";
+import express, { Application, NextFunction, Request, Response } from "express";
 import cors from "cors";
 import config from "./config";
 import { userRoutes } from "./modules/user/user.route";
 import { authRoutes } from "./modules/auth/auth.routes";
 import { commentRoutes } from "./modules/comment/comment.route";
 import { postRoutes } from "./modules/post/post.route";
-
+import { json } from "node:stream/consumers";
+import { notFound } from "./middlewares/notFound";
+import httpStatus from "http-status"
+import { globalErrorHandler } from "./middlewares/globalErrorHandler";
 
 const app : Application = express()
 
@@ -26,5 +29,17 @@ app.use("/api/user", userRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/comments", commentRoutes);
+
+// app.use((req: Request, res: Response)=>{
+//     res.status(404).json({
+//         message:"The route cannot be found",
+//         path: req.originalUrl,
+//         time: Date()
+//     })
+// })
+
+app.use(notFound);
+
+app.use(globalErrorHandler)
 
 export default app;

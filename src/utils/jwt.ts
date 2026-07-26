@@ -15,7 +15,7 @@ const verifiedToken = (token: string, secret: string)=>{
             data: verifiedToken
         };
     } catch (error: any) {
-        console.log("Token Verification failed: ", error);
+        
         return {
             success: false,
             error: error.message
