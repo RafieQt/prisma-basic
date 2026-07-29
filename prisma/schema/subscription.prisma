@@ -10,4 +10,6 @@ model Subscription{
     createdAt DateTime @default(now())
     updateAt DateTime @default(now())
     status SubscriptionStatus @default(ACTIVE)
+
+    @@map("subscriptions")
 }
